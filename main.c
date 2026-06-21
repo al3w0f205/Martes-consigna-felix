@@ -6,7 +6,7 @@ int main() {
     
     do {
         mostrar_menu();
-        opcion = leer_entero_rango("Ingrese una opcion: ", 1, 5);
+        opcion = leer_entero_rango("Ingrese una opcion: ", 1, 6);
 
         switch (opcion) {
             case 1: 
@@ -21,14 +21,17 @@ int main() {
             case 4: 
                 ver_historial_ventas();
                 break;
-            case 5: 
+            case 5:
+                gestionar_inventario();
+                break;
+            case 6: 
                 printf("\nGuardando datos...\n");
                 printf("Saliendo del Sistema de Gestion - Ruedas de Oro. Hasta pronto!\n");
                 break;
             default: 
                 printf("Opcion invalida. Intente de nuevo.\n");
         }
-    } while (opcion != 5);
+    } while (opcion != 6);
     
     return 0;
 }

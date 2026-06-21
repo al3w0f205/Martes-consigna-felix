@@ -26,6 +26,10 @@ void ver_inventario();
 void buscar_vehiculo();
 void registrar_venta();
 void ver_historial_ventas();
+void gestionar_inventario();
+void agregar_vehiculo();
+void editar_vehiculo();
+void eliminar_vehiculo();
 
 void leer_cadena(char *cadena, int longitud);
 int son_iguales_ignorando_mayusculas(const char *cadena1, const char *cadena2);

@@ -79,7 +79,8 @@ void mostrar_menu() {
     printf("2. Buscar Vehiculo (por preferencias)\n");
     printf("3. Registrar Venta\n");
     printf("4. Ver Historial de Ventas\n");
-    printf("5. Salir\n");
+    printf("5. Gestionar Inventario\n");
+    printf("6. Salir\n");
     printf("------------------------------------------\n");
 }
 
@@ -298,4 +299,198 @@ void ver_historial_ventas() {
     }
 
     fclose(f_ventas);
+}
+
+void gestionar_inventario() {
+    int opcion;
+    do {
+        printf("\n--- Gestionar Inventario ---\n");
+        printf("1. Agregar Vehiculo\n");
+        printf("2. Editar Vehiculo\n");
+        printf("3. Eliminar Vehiculo\n");
+        printf("4. Volver al Menu Principal\n");
+        printf("----------------------------\n");
+        opcion = leer_entero_rango("Ingrese una opcion: ", 1, 4);
+
+        switch (opcion) {
+            case 1:
+                agregar_vehiculo();
+                break;
+            case 2:
+                editar_vehiculo();
+                break;
+            case 3:
+                eliminar_vehiculo();
+                break;
+            case 4:
+                printf("Volviendo al menu principal...\n");
+                break;
+            default:
+                printf("Opcion invalida.\n");
+        }
+    } while (opcion != 4);
+}
+
+void agregar_vehiculo() {
+    FILE *archivo = fopen("vehiculos.dat", "ab+");
+    if (!archivo) {
+        printf("Error al abrir el archivo de vehiculos.\n");
+        return;
+    }
+
+    Vehiculo v;
+    Vehiculo v_temp;
+    int max_id = 0;
+
+    rewind(archivo);
+    while (fread(&v_temp, sizeof(Vehiculo), 1, archivo) == 1) {
+        if (v_temp.id > max_id) {
+            max_id = v_temp.id;
+        }
+    }
+
+    v.id = max_id + 1;
+
+    printf("\n--- Agregar Vehiculo (Nuevo ID: %d) ---\n", v.id);
+    printf("Ingrese marca: ");
+    leer_cadena(v.marca, 50);
+    printf("Ingrese modelo: ");
+    leer_cadena(v.modelo, 50);
+    printf("Ingrese tipo: ");
+    leer_cadena(v.tipo, 50);
+    printf("Ingrese condicion: ");
+    leer_cadena(v.condicion, 50);
+    v.precio = leer_flotante_positivo("Ingrese precio: $");
+    
+    int disp;
+    do {
+        disp = leer_entero_rango("¿Esta disponible? (1 para SI, 0 para NO): ", 0, 1);
+    } while (disp != 0 && disp != 1);
+    v.disponible = disp;
+
+    fwrite(&v, sizeof(Vehiculo), 1, archivo);
+    fclose(archivo);
+    printf("Vehiculo agregado exitosamente.\n");
+}
+
+void editar_vehiculo() {
+    int id_buscar = leer_entero_positivo("Ingrese el ID del vehiculo a editar: ");
+    FILE *archivo = fopen("vehiculos.dat", "rb+");
+    if (!archivo) {
+        printf("Error al abrir el archivo de vehiculos.\n");
+        return;
+    }
+
+    Vehiculo v;
+    int encontrado = 0;
+    long pos;
+
+    while (fread(&v, sizeof(Vehiculo), 1, archivo) == 1) {
+        if (v.id == id_buscar) {
+            encontrado = 1;
+            pos = ftell(archivo) - sizeof(Vehiculo);
+            
+            printf("\nVehiculo encontrado:\n");
+            printf("Marca: %s\nModelo: %s\nTipo: %s\nCondicion: %s\nPrecio: $%.2f\nDisponible: %s\n", 
+                   v.marca, v.modelo, v.tipo, v.condicion, v.precio, v.disponible ? "SI" : "NO");
+            
+            printf("\n--- Nuevos datos (presione Enter para mantener el actual) ---\n");
+            
+            char buffer[50];
+            
+            printf("Marca actual (%s): ", v.marca);
+            leer_cadena(buffer, 50);
+            if (strlen(buffer) > 0) strcpy(v.marca, buffer);
+            
+            printf("Modelo actual (%s): ", v.modelo);
+            leer_cadena(buffer, 50);
+            if (strlen(buffer) > 0) strcpy(v.modelo, buffer);
+            
+            printf("Tipo actual (%s): ", v.tipo);
+            leer_cadena(buffer, 50);
+            if (strlen(buffer) > 0) strcpy(v.tipo, buffer);
+            
+            printf("Condicion actual (%s): ", v.condicion);
+            leer_cadena(buffer, 50);
+            if (strlen(buffer) > 0) strcpy(v.condicion, buffer);
+            
+            printf("Precio actual ($%.2f) - Ingrese nuevo precio (o <= 0 para no cambiar): $", v.precio);
+            float n_precio;
+            int leidos = scanf("%f", &n_precio);
+            while (getchar() != '\n');
+            if (leidos == 1 && n_precio > 0) {
+                v.precio = n_precio;
+            }
+            
+            printf("Disponible actual (%s) - Ingrese 1(SI), 0(NO) o -1(no cambiar): ", v.disponible ? "SI" : "NO");
+            int n_disp;
+            leidos = scanf("%d", &n_disp);
+            while (getchar() != '\n');
+            if (leidos == 1 && (n_disp == 0 || n_disp == 1)) {
+                v.disponible = n_disp;
+            }
+
+            fseek(archivo, pos, SEEK_SET);
+            fwrite(&v, sizeof(Vehiculo), 1, archivo);
+            printf("Vehiculo actualizado exitosamente.\n");
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("No se encontro un vehiculo con ese ID.\n");
+    }
+
+    fclose(archivo);
+}
+
+void eliminar_vehiculo() {
+    int id_borrar = leer_entero_positivo("Ingrese el ID del vehiculo a eliminar: ");
+    
+    FILE *archivo = fopen("vehiculos.dat", "rb");
+    if (!archivo) {
+        printf("Error al abrir el archivo de vehiculos.\n");
+        return;
+    }
+    
+    FILE *temp = fopen("vehiculos_temp.dat", "wb");
+    if (!temp) {
+        printf("Error al crear archivo temporal.\n");
+        fclose(archivo);
+        return;
+    }
+
+    Vehiculo v;
+    int encontrado = 0;
+
+    while (fread(&v, sizeof(Vehiculo), 1, archivo) == 1) {
+        if (v.id == id_borrar) {
+            encontrado = 1;
+            printf("\nVehiculo encontrado y será eliminado:\n");
+            printf("ID: %d | Marca: %s | Modelo: %s | Precio: $%.2f\n", v.id, v.marca, v.modelo, v.precio);
+            
+            int conf = leer_entero_rango("¿Seguro que desea eliminarlo? (1 para SI, 0 para Cancelar): ", 0, 1);
+            if (conf == 0) {
+                printf("Operacion cancelada.\n");
+                // Lo escribimos porque canceló
+                fwrite(&v, sizeof(Vehiculo), 1, temp);
+                encontrado = 2; // Para saber que lo encontro pero no lo borró
+            } else {
+                printf("Vehiculo eliminado exitosamente.\n");
+            }
+        } else {
+            fwrite(&v, sizeof(Vehiculo), 1, temp);
+        }
+    }
+
+    fclose(archivo);
+    fclose(temp);
+
+    if (encontrado == 0) {
+        printf("No se encontro un vehiculo con ese ID.\n");
+        remove("vehiculos_temp.dat");
+    } else {
+        remove("vehiculos.dat");
+        rename("vehiculos_temp.dat", "vehiculos.dat");
+    }
 }
