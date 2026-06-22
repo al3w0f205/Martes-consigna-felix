@@ -316,12 +316,28 @@ void gestionar_inventario() {
             case 1:
                 agregar_vehiculo();
                 break;
-            case 2:
-                editar_vehiculo();
+            case 2: {
+                int confirmar_editar = leer_entero_rango(
+                    "\nSeleccionaste Editar Vehiculo. Confirmar? (1=Si / 0=Cancelar): ", 0, 1
+                );
+                if (confirmar_editar == 1) {
+                    editar_vehiculo();
+                } else {
+                    printf("Operacion cancelada. Volviendo al menu de gestion...\n");
+                }
                 break;
-            case 3:
-                eliminar_vehiculo();
+            }
+            case 3: {
+                int confirmar_eliminar = leer_entero_rango(
+                    "\nSeleccionaste Eliminar Vehiculo. Confirmar? (1=Si / 0=Cancelar): ", 0, 1
+                );
+                if (confirmar_eliminar == 1) {
+                    eliminar_vehiculo();
+                } else {
+                    printf("Operacion cancelada. Volviendo al menu de gestion...\n");
+                }
                 break;
+            }
             case 4:
                 printf("Volviendo al menu principal...\n");
                 break;
